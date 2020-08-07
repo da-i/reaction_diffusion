@@ -32,6 +32,14 @@ class DiffMatrix:
             self.timestep = 1
             self.laplace_window = 3
 
+        elif self.reaction == "Mitosis":
+            self.diff_a = 1
+            self.diff_b = 0.5
+            self.feed_rate = 0.0367
+            self.kill_rate = 0.0649
+            self.timestep = 1
+            self.laplace_window = 3
+            
         self.prepare_matrix()
         self.initialize_sum_matricies()
 
