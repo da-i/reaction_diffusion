@@ -17,7 +17,8 @@ class DiffMatrix:
         self.reaction = reaction
 
         self.start_time = int(time.time())
-        Path(f'matrix_plots/{self.start_time}').mkdir()
+        self.img_dir = Path(f'matrix_plots/{self.start_time}')
+        self.img_dir.mkdir()
 
         self.matrix_shape = (int(self.size), int(self.size))
         self.matrix_a = self.initiate_matrix()
@@ -39,7 +40,7 @@ class DiffMatrix:
             self.kill_rate = 0.0649
             self.timestep = 1
             self.laplace_window = 3
-            
+
         self.prepare_matrix()
         self.initialize_sum_matricies()
 
@@ -94,13 +95,16 @@ class DiffMatrix:
         self.matrix_b_diffuse = self.diff_b * convolve2d(self.matrix_b, diffusion_kernel, boundary="wrap",mode='same')
 
     def plot_matrix_to_file(self,i):
+        i_fmt = '{:09d}'.format(i)
+
         fig,axes = plt.subplots(1,2)
         axes[0].imshow(dm.matrix_a, cmap='binary', interpolation='nearest',vmin=0, vmax=1)
         axes[0].set_title(f'Activator at {i}')
         axes[1].set_title(f'Blocker at {i}')
         axes[1].imshow(dm.matrix_b, cmap='binary', interpolation='nearest',vmin=0, vmax=1)
-        plt.savefig(f'matrix_plots/{self.start_time}/matrix_{i}.png')
-
+        
+        plt.savefig(f'matrix_plots/{self.start_time}/{i_fmt}.png')
+        plt.close()
 
     def print_matrix(self):
         print(self.matrix_a)
@@ -121,21 +125,28 @@ class DiffMatrix:
         print(self.matrix_b_react)
         print('\t### matrix_b_feed')
         print(self.matrix_b_feed)
-        
+
+    def generate_gif(self):
+        filenames = self.img_dir.glob('*.png')
+        filenames = [x for x in filenames]
+        filenames.sort()
+        with imageio.get_writer(f'{self.img_dir}/{self.reaction}.gif', mode='I') as writer:
+            for filename in filenames:
+                image = imageio.imread(filename)
+                writer.append_data(image) 
 
     def _next(self):
-        # print(f"Mean a: {dm.matrix_a.mean()}Mean b:{dm.matrix_b.mean()}")
-        # print(f"Max a: {dm.matrix_b.max()}Max b:{dm.matrix_b.max()}")
 
+        # calculate changes to system
         self.diffuse()
         self.feed()
         self.react()
 
-        self.matrix_a = self.matrix_a + (self.matrix_a_diffuse - self.matrix_a_react + self.matrix_a_feed)
-        self.matrix_b = self.matrix_b + (self.matrix_b_diffuse + self.matrix_b_react - self.matrix_b_feed)
+        #Update matricies
+        self.matrix_a += self.matrix_a_diffuse - self.matrix_a_react + self.matrix_a_feed
+        self.matrix_b += self.matrix_b_diffuse + self.matrix_b_react - self.matrix_b_feed
         
         self.initialize_sum_matricies()
-
 
 if __name__ == "__main__":
     print_every_n = 100
@@ -147,3 +158,4 @@ if __name__ == "__main__":
         if i % print_every_n == 0:
             dm.plot_matrix_to_file(i)
     
+    dm.generate_gif()
