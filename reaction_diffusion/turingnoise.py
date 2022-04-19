@@ -46,7 +46,7 @@ class DiffMatrix:
             # y axis scaled
             self.feed_rate = self.make_range_array(0.001, 0.1, self.size)
             self.feed_rate = np.transpose(self.feed_rate)
-            #x axis scaled
+            # x axis scaled
             self.kill_rate = self.make_range_array(0.05, 0.065, self.size)
 
             self.timestep = 1
@@ -67,6 +67,9 @@ class DiffMatrix:
         return matrix
 
     def prepare_matrix(self):
+        """
+        Based on the start template, it will fill both the a(activator) and b(blocker) matricies. The start template dictates the shape of the fill for the blocker to get the reaction process going.
+        """
         self.matrix_a = np.ones(self.matrix_shape)
         self.matrix_b = np.zeros(self.matrix_shape)
 
@@ -85,7 +88,10 @@ class DiffMatrix:
             end_b = int(0.52 * self.size)
             self.matrix_b[start_b:end_b, start_b:end_b] = 1
 
-    def initialize_sum_matricies(self,):
+    def initialize_sum_matricies(self):
+        """
+        Set all the matricies needed for the calculation of the next itteration to zeros
+        """
         self.matrix_a_feed = self.initiate_matrix()
         self.matrix_a_react = self.initiate_matrix()
         self.matrix_a_diffuse = self.initiate_matrix()
@@ -95,16 +101,19 @@ class DiffMatrix:
         self.matrix_b_diffuse = self.initiate_matrix()
 
     def feed(self):
+        """
+        Calculated the feed matrix for both a and b
+        """
         # create a up until 1
         self.matrix_a_feed = self.feed_rate * (1 - self.matrix_a)
         # bestroy b if any
         self.matrix_b_feed = (self.feed_rate + self.kill_rate) * self.matrix_b
 
     def react(self):
-        # consume a and turn it into b
-
+        """
+        consume a and turn it into b
+        """
         reaction_rate = self.matrix_a * self.matrix_b * self.matrix_b
-
         self.matrix_a_react = reaction_rate
         self.matrix_b_react = reaction_rate
 
